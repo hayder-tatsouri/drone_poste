@@ -1,0 +1,4 @@
+fastapi
+uvicorn
+websockets
+mavsdk<4

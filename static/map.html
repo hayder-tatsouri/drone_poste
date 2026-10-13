@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DronePi: Map and control</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">DronePi</div>
+    <nav class="tabs">
+      <a href="/">Video</a>
+      <a href="/map" aria-current="page">Map and control</a>
+    </nav>
+    <div class="link" id="link" data-state="bad"><span class="dot"></span><span class="text">Server offline</span></div>
+  </header>
+  <section class="strip" aria-label="Telemetry">
+    <div class="stat"><div class="label">Battery</div><div class="value" id="s-batt">n/a</div></div>
+    <div class="stat"><div class="label">GPS</div><div class="value" id="s-gps">n/a</div></div>
+    <div class="stat"><div class="label">Altitude</div><div class="value" id="s-alt">n/a</div></div>
+    <div class="stat"><div class="label">Ground speed</div><div class="value" id="s-speed">n/a</div></div>
+    <div class="stat"><div class="label">Flight mode</div><div class="value" id="s-mode">n/a</div></div>
+    <div class="stat"><div class="label">Motors</div><div class="value" id="s-armed">Disarmed</div></div>
+  </section>
+  <main class="stage">
+    <div class="map-layout">
+      <div style="position:relative;min-height:0">
+        <div id="map"></div>
+        <button class="btn follow" id="follow" type="button">Following drone</button>
+      </div>
+      <aside class="panel">
+        <section>
+          <h2>Position</h2>
+          <div class="coords" id="coords">No GPS position yet</div>
+        </section>
+        <section>
+          <h2>Takeoff</h2>
+          <div class="row">
+            <div class="stepper">
+              <button type="button" id="alt-minus" aria-label="Decrease altitude">&minus;</button>
+              <input id="alt" type="number" min="1" max="20" step="1" value="5" inputmode="numeric" aria-label="Takeoff altitude in meters">
+              <button type="button" id="alt-plus" aria-label="Increase altitude">+</button>
+            </div>
+            <span class="unit">meters</span>
+          </div>
+          <div class="stack" style="margin-top:10px">
+            <button class="btn primary" id="takeoff" type="button">Take off</button>
+            <div class="hint" id="hint"></div>
+          </div>
+        </section>
+        <section>
+          <h2>Flight</h2>
+          <div class="stack">
+            <button class="btn fill" id="rtl" type="button">Return home</button>
+            <button class="btn fill" id="land" type="button">Land now</button>
+            <button class="btn danger fill" id="disarm" type="button">Disarm</button>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <dialog id="confirm">
+    <form method="dialog">
+      <h3 id="c-title"></h3>
+      <p id="c-text"></p>
+      <div class="row">
+        <button class="btn fill" value="cancel">Cancel</button>
+        <button class="btn primary fill" value="ok" id="c-ok">Confirm</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+  <script src="/static/common.js"></script>
+  <script>
+    const { $, num, api, toast } = DronePi;
+    const DEFAULT_CENTER = [36.8065, 10.1815];
+
+    // ---- map
+    let map = null, marker = null, trail = null, homeMarker = null;
+    let follow = true, centered = false;
+    const pts = [];
+
+    if (typeof L === "undefined") {
+      $("map").innerHTML = '<div class="map-note"><strong>Map unavailable.</strong><br>This device needs internet access to load the map. Connect the Pi and this device to a Wi-Fi network with internet.</div>';
+    } else {
+      map = L.map("map", { zoomControl: true }).setView(DEFAULT_CENTER, 15);
+      const streets = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap contributors" });
+      const sat = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19, attribution: "Imagery &copy; Esri" });
+      streets.addTo(map);
+      L.control.layers({ Streets: streets, Satellite: sat }, null, { position: "topright" }).addTo(map);
+      trail = L.polyline([], { color: "#5cc8e8", weight: 3 }).addTo(map);
+      map.on("dragstart", () => setFollow(false));
+    }
+
+    const droneIcon = (typeof L !== "undefined") ? L.divIcon({
+      className: "",
+      iconSize: [34, 34],
+      iconAnchor: [17, 17],
+      html: '<div class="drone"><svg viewBox="0 0 24 24"><path d="M12 2 L20 21 L12 17 L4 21 Z" fill="#f0b64a" stroke="#0d1620" stroke-width="1.5" stroke-linejoin="round"/></svg></div>',
+    }) : null;
+
+    function setFollow(on) {
+      follow = on;
+      $("follow").textContent = on ? "Following drone" : "Follow drone";
+      if (on && marker && map) map.panTo(marker.getLatLng());
+    }
+    $("follow").addEventListener("click", () => setFollow(!follow));
+
+    function updateMap(d) {
+      if (!map || d.lat == null || d.lon == null || (d.lat === 0 && d.lon === 0)) return;
+      const p = [d.lat, d.lon];
+      if (!marker) marker = L.marker(p, { icon: droneIcon, keyboard: false }).addTo(map);
+      else marker.setLatLng(p);
+      const el = marker.getElement();
+      if (el) el.querySelector(".drone").style.transform = "rotate(" + d.yaw + "deg)";
+      const lastPt = pts[pts.length - 1];
+      if (!lastPt || lastPt[0] !== p[0] || lastPt[1] !== p[1]) {
+        pts.push(p);
+        if (pts.length > 600) pts.shift();
+        trail.setLatLngs(pts);
+      }
+      if (!centered) { map.setView(p, 18); centered = true; }
+      else if (follow) map.panTo(p, { animate: false });
+      if (d.home && !homeMarker) {
+        homeMarker = L.circleMarker([d.home.lat, d.home.lon], { radius: 8, color: "#5fd39a", weight: 3, fillOpacity: 0.2 }).addTo(map).bindTooltip("Home");
+      }
+    }
+
+    // ---- controls
+    const alt = $("alt");
+    const clampAlt = () => {
+      const max = Number(alt.max), v = Number(alt.value);
+      alt.value = Math.min(max, Math.max(1, Number.isFinite(v) ? Math.round(v) : 5));
+    };
+    $("alt-minus").addEventListener("click", () => { alt.value = Number(alt.value) - 1; clampAlt(); });
+    $("alt-plus").addEventListener("click", () => { alt.value = Number(alt.value) + 1; clampAlt(); });
+    alt.addEventListener("change", clampAlt);
+
+    function confirmDialog(title, text, okLabel) {
+      const dlg = $("confirm");
+      $("c-title").textContent = title;
+      $("c-text").textContent = text;
+      $("c-ok").textContent = okLabel;
+      dlg.returnValue = "";
+      dlg.showModal();
+      return new Promise((res) => dlg.addEventListener("close", () => res(dlg.returnValue === "ok"), { once: true }));
+    }
+
+    async function run(path, body) {
+      try {
+        const r = await api(path, body);
+        toast(r.message || "Done", "ok");
+      } catch (e) {
+        toast(e.message, "error");
+      }
+    }
+
+    $("takeoff").addEventListener("click", async () => {
+      clampAlt();
+      const a = Number(alt.value);
+      const ok = await confirmDialog("Take off to " + a + " m?", "The drone will arm and climb. Make sure the area is clear and the transmitter is ready.", "Take off");
+      if (ok) run("/api/takeoff", { altitude: a });
+    });
+    $("rtl").addEventListener("click", () => run("/api/rtl"));
+    $("land").addEventListener("click", () => run("/api/land"));
+    $("disarm").addEventListener("click", async () => {
+      const ok = await confirmDialog("Disarm motors?", "Only disarm on the ground. The server refuses this while the drone is in the air.", "Disarm");
+      if (ok) run("/api/disarm");
+    });
+
+    let maxSet = false;
+    DronePi.onTelemetry((d) => {
+      if (!maxSet && d.max_alt) { alt.max = d.max_alt; maxSet = true; }
+      updateMap(d);
+      $("coords").innerHTML = d.lat == null ? "No GPS position yet" :
+        "Lat " + d.lat.toFixed(6) + "<br>Lon " + d.lon.toFixed(6) + "<br>Heading " + num(d.yaw, 0) + "&deg;";
+
+      const canTakeoff = d.connected && d.global_ok && !d.in_air;
+      $("takeoff").disabled = !canTakeoff;
+      $("rtl").disabled = !(d.connected && d.armed);
+      $("land").disabled = !(d.connected && d.armed);
+      $("disarm").disabled = !(d.connected && d.armed && !d.in_air);
+      $("hint").textContent =
+        !d.connected ? "Waiting for the flight controller" :
+        !d.global_ok ? "Waiting for a GPS position" :
+        d.in_air ? "The drone is in the air" : "Ready to take off";
+    });
+  </script>
+</body>
+</html>

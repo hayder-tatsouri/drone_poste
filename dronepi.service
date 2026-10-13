@@ -1,0 +1,17 @@
+[Unit]
+Description=DronePi web interface
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=drone
+WorkingDirectory=/home/drone/poste-app/web
+ExecStart=/home/drone/poste-app/venv/bin/uvicorn app:app --host 0.0.0.0 --port 8000
+Environment=MAV_CONN=serial:///dev/serial0:57600
+Environment=MAX_ALT=20
+SupplementaryGroups=dialout video
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

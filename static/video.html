@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DronePi: Video</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">DronePi</div>
+    <nav class="tabs">
+      <a href="/" aria-current="page">Video</a>
+      <a href="/map">Map and control</a>
+    </nav>
+    <div class="link" id="link" data-state="bad"><span class="dot"></span><span class="text">Server offline</span></div>
+  </header>
+  <section class="strip" aria-label="Telemetry">
+    <div class="stat"><div class="label">Battery</div><div class="value" id="s-batt">n/a</div></div>
+    <div class="stat"><div class="label">GPS</div><div class="value" id="s-gps">n/a</div></div>
+    <div class="stat"><div class="label">Altitude</div><div class="value" id="s-alt">n/a</div></div>
+    <div class="stat"><div class="label">Ground speed</div><div class="value" id="s-speed">n/a</div></div>
+    <div class="stat"><div class="label">Flight mode</div><div class="value" id="s-mode">n/a</div></div>
+    <div class="stat"><div class="label">Motors</div><div class="value" id="s-armed">Disarmed</div></div>
+  </section>
+  <main class="stage">
+    <div class="video-wrap">
+      <img id="feed" alt="Live camera feed" src="/video">
+      <div class="empty" id="empty">
+        <div><strong>No video</strong>The camera is not available. Check the ribbon cable and run rpicam-hello --list-cameras on the Pi.</div>
+      </div>
+    </div>
+    <div class="horizon" aria-label="Attitude indicator">
+      <svg viewBox="0 0 120 120">
+        <g id="horizon">
+          <rect x="-120" y="-200" width="360" height="260" fill="#2b6a9e"/>
+          <rect x="-120" y="60" width="360" height="260" fill="#7a5b3a"/>
+          <line x1="-120" y1="60" x2="240" y2="60" stroke="#e7eef5" stroke-width="1.5"/>
+        </g>
+        <path d="M30 60 H50 M70 60 H90 M50 60 V66 M70 60 V66" stroke="#f0b64a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <circle cx="60" cy="60" r="2.5" fill="#f0b64a"/>
+      </svg>
+    </div>
+    <div class="readout" id="readout"><span>Roll</span> 0.0&deg; &nbsp; <span>Pitch</span> 0.0&deg; &nbsp; <span>Yaw</span> 0&deg;</div>
+  </main>
+  <script src="/static/common.js"></script>
+  <script>
+    const { $, num } = DronePi;
+    const empty = $("empty");
+    $("feed").addEventListener("error", () => empty.classList.add("show"));
+    $("feed").addEventListener("load", () => empty.classList.remove("show"));
+    DronePi.onTelemetry((d) => {
+      if (d.camera === false) empty.classList.add("show");
+      $("horizon").setAttribute("transform", "rotate(" + (-d.roll) + " 60 60) translate(0 " + (d.pitch * 1.4) + ")");
+      $("readout").innerHTML = "<span>Roll</span> " + num(d.roll) + "&deg; &nbsp; <span>Pitch</span> " + num(d.pitch) + "&deg; &nbsp; <span>Yaw</span> " + num(d.yaw, 0) + "&deg;";
+    });
+  </script>
+</body>
+</html>
