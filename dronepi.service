@@ -9,6 +9,7 @@ WorkingDirectory=/home/drone/poste-app/web
 ExecStart=/home/drone/poste-app/venv/bin/uvicorn app:app --host 0.0.0.0 --port 8000
 Environment=MAV_CONN=serial:///dev/serial0:57600
 Environment=MAX_ALT=20
+Environment=LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libstdc++.so.6
 SupplementaryGroups=dialout video
 Restart=always
 RestartSec=3

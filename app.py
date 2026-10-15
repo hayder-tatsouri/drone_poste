@@ -69,13 +69,15 @@ class Camera:
 
     def start(self):
         try:
+            from libcamera import Transform
             from picamera2 import Picamera2
             from picamera2.encoders import MJPEGEncoder
             from picamera2.outputs import FileOutput
 
             self.cam = Picamera2()
             cfg = self.cam.create_video_configuration(
-                main={"size": (640, 480)}, controls={"FrameRate": 15}
+                main={"size": (640, 480)}, controls={"FrameRate": 15},
+                transform=Transform(hflip=True, vflip=True),
             )
             self.cam.configure(cfg)
             try:

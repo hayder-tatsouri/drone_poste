@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DronePi: Map and control</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+  <link rel="stylesheet" href="/static/leaflet/leaflet.css">
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
@@ -73,7 +73,8 @@
     </form>
   </dialog>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+  <script src="/static/leaflet/leaflet.js"></script>
+  <script src="/static/leaflet/protomaps-leaflet.js"></script>
   <script src="/static/common.js"></script>
   <script>
     const { $, num, api, toast } = DronePi;
@@ -85,13 +86,32 @@
     const pts = [];
 
     if (typeof L === "undefined") {
-      $("map").innerHTML = '<div class="map-note"><strong>Map unavailable.</strong><br>This device needs internet access to load the map. Connect the Pi and this device to a Wi-Fi network with internet.</div>';
+      $("map").innerHTML = '<div class="map-note"><strong>Map library missing.</strong><br>Check that static/leaflet/leaflet.js exists on the Pi.</div>';
     } else {
       map = L.map("map", { zoomControl: true }).setView(DEFAULT_CENTER, 15);
       const streets = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap contributors" });
       const sat = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19, attribution: "Imagery &copy; Esri" });
-      streets.addTo(map);
-      L.control.layers({ Streets: streets, Satellite: sat }, null, { position: "topright" }).addTo(map);
+      const layers = {};
+      let base = streets;
+      if (typeof protomapsL !== "undefined") {
+        const pmUrl = new URL("/static/maps/tunisia.pmtiles", location.href).href;
+        const offline = protomapsL.leafletLayer({
+          url: pmUrl,
+          flavor: "light",
+          lang: "en",
+          attribution: "&copy; OpenStreetMap contributors, Protomaps",
+        });
+        layers["Offline map (Tunisia)"] = offline;
+        base = offline;
+        // if the map file is not on the Pi yet, fall back to the online map
+        fetch(pmUrl, { method: "HEAD" }).then((r) => {
+          if (!r.ok && map.hasLayer(offline)) { map.removeLayer(offline); streets.addTo(map); }
+        }).catch(() => {});
+      }
+      layers["Online streets"] = streets;
+      layers["Online satellite"] = sat;
+      base.addTo(map);
+      L.control.layers(layers, null, { position: "topright" }).addTo(map);
       trail = L.polyline([], { color: "#5cc8e8", weight: 3 }).addTo(map);
       map.on("dragstart", () => setFollow(false));
     }

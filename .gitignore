@@ -1,0 +1,12 @@
+# Downloaded map libraries and offline map data
+static/leaflet/
+static/maps/
+
+# Python-generated files
+__pycache__/
+*.py[cod]
+
+# Local configuration and environments
+.env
+.venv/
+venv/
