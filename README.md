@@ -1,12 +1,12 @@
 # DronePi
 
-![DronePi drone](assests/drone.jpg)
+<img src="assests/drone.jpg" alt="DronePi drone" width="500">
 
 A quadcopter with a Raspberry Pi companion computer and a web ground station that runs on the Pi itself. The Pi creates its own Wi-Fi hotspot, so a phone or laptop can watch the live camera, follow the drone on an offline map of Tunisia, and send simple commands, with no internet and no SSH session needed in the field.
 
 The project is carried out in collaboration with **La Poste Tunisienne**.
 
-![La Poste Tunisienne logo](assests/logo.jpg)
+<img src="assests/logo.jpg" alt="La Poste Tunisienne logo" width="220">
 
 > **Safety.** This is a flying machine. Remove the propellers for every bench test, keep a bound radio transmitter as a manual override, and fly only in an open area. Software commands from the web page are not a replacement for a pilot.
 
@@ -16,13 +16,13 @@ The project is carried out in collaboration with **La Poste Tunisienne**.
 
 Watch the project demonstration on YouTube:
 
-[![Watch the DronePi demonstration](https://img.youtube.com/vi/Cy97sNL5oDs/hqdefault.jpg)](https://www.youtube.com/shorts/Cy97sNL5oDs)
+<a href="https://www.youtube.com/shorts/Cy97sNL5oDs"><img src="https://img.youtube.com/vi/Cy97sNL5oDs/hqdefault.jpg" alt="Watch the DronePi demonstration" width="360"></a>
 
 ---
 
 ## Hardware
 
-![Drone hardware](assests/drone2.jpg)
+<img src="assests/drone2.jpg" alt="Drone hardware" width="500">
 
 | Part | Details |
 | --- | --- |
@@ -39,7 +39,7 @@ Watch the project demonstration on YouTube:
 
 ## Architecture
 
-![Drone system architecture](assests/wiring_diagam_drone%20poste.png)
+<img src="assests/wiring_diagam_drone%20poste.png" alt="Drone system architecture" width="650">
 
 ```
                  +---------------------------------------------+
@@ -129,7 +129,7 @@ Tested on Raspberry Pi OS Lite 64-bit, Bookworm (Debian 12). Newer Trixie images
 
 ## Web application
 
-![Drone video interface](assests/video_interface.jpg)
+<img src="assests/video_interface.jpg" alt="Drone video interface" width="500">
 
 A FastAPI backend with two pages, served on port 8000.
 
@@ -137,7 +137,7 @@ A FastAPI backend with two pages, served on port 8000.
 
 **Video** (`/`): the live Pi Camera stream (MJPEG, 640x480, 15 fps), with an attitude indicator (roll and pitch) drawn on top.
 
-![Map and control interface](assests/map_interface.jpg)
+<img src="assests/map_interface.jpg" alt="Map and control interface" width="500">
 
 **Map and control** (`/map`):
 
