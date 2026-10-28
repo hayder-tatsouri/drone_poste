@@ -1,32 +1,28 @@
 # DronePi
 
+![DronePi drone](assests/drone.jpg)
+
 A quadcopter with a Raspberry Pi companion computer and a web ground station that runs on the Pi itself. The Pi creates its own Wi-Fi hotspot, so a phone or laptop can watch the live camera, follow the drone on an offline map of Tunisia, and send simple commands, with no internet and no SSH session needed in the field.
 
-The project is carried out in collaboration with **La Poste Tunisienne**. The long-term goal is autonomous missions.
+The project is carried out in collaboration with **La Poste Tunisienne**.
+
+![La Poste Tunisienne logo](assests/logo.jpg)
 
 > **Safety.** This is a flying machine. Remove the propellers for every bench test, keep a bound radio transmitter as a manual override, and fly only in an open area. Software commands from the web page are not a replacement for a pilot.
 
 ---
 
-## Project status
+## Demonstration video
 
-| Area | Status |
-| --- | --- |
-| Pi to flight controller MAVLink link (UART, MAVSDK) | Working |
-| Live attitude (roll, pitch, yaw) and battery voltage | Working |
-| Arm and disarm from a script | Working |
-| Camera video stream | Working |
-| GPS position on the map | Working |
-| Web interface (video page, map page, controls) | Working, served by a systemd service |
-| Pi as Wi-Fi hotspot | Working |
-| Offline map of Tunisia | Built, loaded from a local file |
-| Compass | **In progress** (the external compass is reported unhealthy) |
-| Takeoff, return home and land from the web page in flight | **Not flight tested yet**, depends on the compass work |
-| Autonomous missions | Planned, after the compass is working |
+Watch the project demonstration on YouTube:
+
+[![Watch the DronePi demonstration](https://img.youtube.com/vi/Cy97sNL5oDs/hqdefault.jpg)](https://www.youtube.com/shorts/Cy97sNL5oDs)
 
 ---
 
 ## Hardware
+
+![Drone hardware](assests/drone2.jpg)
 
 | Part | Details |
 | --- | --- |
@@ -37,11 +33,13 @@ The project is carried out in collaboration with **La Poste Tunisienne**. The lo
 | Companion computer | Raspberry Pi Zero 2 W |
 | Camera | Raspberry Pi Camera Module 3 (CSI) |
 | GPS | M6N GPS module, connected to the flight controller |
-| Compass | GY-271 external compass on I2C, connected to the flight controller (work in progress) |
+| Compass | GY-271 external compass on I2C, connected to the flight controller |
 
 ---
 
 ## Architecture
+
+![Drone system architecture](assests/wiring_diagam_drone%20poste.png)
 
 ```
                  +---------------------------------------------+
@@ -102,13 +100,11 @@ On the UART wired to the Pi (`x` is its serial number):
 Pre-arm checks that were met during testing:
 
 * `PreArm: Logging failed`: caused by no log storage on the board. Either enable a log backend that the board supports (`LOG_BACKEND_TYPE`), or untick "Logging Available" in `ARMING_CHECK` for bench tests.
-* `Mode change to Guided failed: requires position`: GUIDED needs a valid position estimate from the EKF, which needs a heading. A GPS fix alone is not enough. See the compass section.
+* `Mode change to Guided failed: requires position`: GUIDED needs a valid position estimate from the EKF, which needs a heading. A GPS fix alone is not enough.
 
-### Compass (in progress)
+### Compass
 
-The GY-271 compass is currently reported unhealthy, so autonomous modes are blocked. The plan is to fix it (I2C wiring, mounting the module on a mast away from the power wires, orientation, calibration), then set `COMPASS_ENABLE = 1` and `EK3_SRC1_YAW = 1`. That is the reliable way to get a GUIDED takeoff from the ground.
-
-Compass-less flight is possible in ArduCopter using GPS-based yaw (`COMPASS_ENABLE = 0`, `EK3_SRC1_YAW = 8`), but the heading only aligns after the drone has moved, so it is not suitable for a first autonomous takeoff.
+The external GY-271 compass is working and provides the heading required by the flight controller for position estimation and autonomous flight modes.
 
 ---
 
@@ -133,11 +129,15 @@ Tested on Raspberry Pi OS Lite 64-bit, Bookworm (Debian 12). Newer Trixie images
 
 ## Web application
 
+![Drone video interface](assests/video_interface.jpg)
+
 A FastAPI backend with two pages, served on port 8000.
 
 ### Pages
 
 **Video** (`/`): the live Pi Camera stream (MJPEG, 640x480, 15 fps), with an attitude indicator (roll and pitch) drawn on top.
+
+![Map and control interface](assests/map_interface.jpg)
 
 **Map and control** (`/map`):
 
@@ -265,7 +265,7 @@ dronepi-web/
 | `libcmavsdk.so: undefined symbol ... libstdc++` | Same cause (the v4 native library). Pin `mavsdk<4`, or preload the system library: `LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libstdc++.so.6`. |
 | `/dev/serial0` does not exist | UART not enabled. Add `enable_uart=1` to `/boot/firmware/config.txt` and reboot. |
 | No telemetry on the page | Check `journalctl -u dronepi -n 40`, confirm TX/RX are crossed, and that `SERIALx_PROTOCOL = 2` and `SERIALx_BAUD = 57` are set. Stop the service before testing the port with another tool. |
-| Health flags false, arm refused | Read the `PreArm:` messages. Calibrate the accelerometer and fix the compass. |
+| Health flags false, arm refused | Read the `PreArm:` messages and calibrate the accelerometer if needed. |
 | Pi Zero 2 W does not join Wi-Fi after flashing | Use the newest Imager, Bookworm Lite 64-bit, and a 2.4 GHz network (a phone hotspot is a good test). |
 | SSH warns "host identification has changed" after reflashing | Run `ssh-keygen -R <address>` on the computer and connect again. |
 
@@ -273,12 +273,11 @@ dronepi-web/
 
 ## Roadmap
 
-1. Fix and calibrate the compass, then validate GUIDED mode on the bench.
-2. Flight test takeoff, hold, return home and land with the transmitter ready as an override.
-3. Switch flight mode (GUIDED) from the web page.
-4. Waypoint missions: define a path on the map and upload it.
-5. Failsafe configuration for the Wi-Fi link (`FS_GCS_ENABLE`) and battery.
-6. Optional: access protection for the web page.
+1. Flight test takeoff, hold, return home and land with the transmitter ready as an override.
+2. Switch flight mode (GUIDED) from the web page.
+3. Waypoint missions: define a path on the map and upload it.
+4. Failsafe configuration for the Wi-Fi link (`FS_GCS_ENABLE`) and battery.
+5. Optional: access protection for the web page.
 
 ---
 
