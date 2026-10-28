@@ -1,4 +1,9 @@
-# DronePi
+# dronePoste
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.8+-blue?style=flat-square&logo=python" />
+  <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react" />
+</p>
 
 <img src="assests/drone.jpg" alt="DronePi drone" width="500">
 
@@ -10,13 +15,35 @@ The project is carried out in collaboration with **La Poste Tunisienne**.
 
 > **Safety.** This is a flying machine. Remove the propellers for every bench test, keep a bound radio transmitter as a manual override, and fly only in an open area. Software commands from the web page are not a replacement for a pilot.
 
+<p align="center">
+  <a href="https://www.youtube.com/shorts/Cy97sNL5oDs">
+    <img src="https://img.shields.io/badge/Watch%20Video-YouTube-red?style=for-the-badge&logo=youtube" alt="Watch the dronePoste video" />
+  </a>
+</p>
+
+## Table of contents
+
+- [Demonstration video](#demonstration-video)
+- [Hardware](#hardware)
+- [Architecture](#architecture)
+- [Wiring](#wiring)
+- [Flight controller configuration (ArduPilot)](#flight-controller-configuration-ardu-pilot)
+- [Raspberry Pi setup](#raspberry-pi-setup)
+- [Web application](#web-application)
+- [Offline map of Tunisia](#offline-map-of-tunisia)
+- [Pi as a Wi-Fi hotspot](#pi-as-a-wi-fi-hotspot)
+- [Project structure](#project-structure)
+- [Troubleshooting notes](#troubleshooting-notes)
+- [Roadmap](#roadmap)
+- [Team](#team)
+
 ---
 
 ## Demonstration video
 
 Watch the project demonstration on YouTube:
 
-<a href="https://www.youtube.com/shorts/Cy97sNL5oDs"><img src="https://img.youtube.com/vi/Cy97sNL5oDs/hqdefault.jpg" alt="Watch the DronePi demonstration" width="360"></a>
+<a href="https://www.youtube.com/shorts/Cy97sNL5oDs"><img src="https://img.youtube.com/vi/Cy97sNL5oDs/hqdefault.jpg" alt="Watch the dronePoste demonstration" width="360"></a>
 
 ---
 
