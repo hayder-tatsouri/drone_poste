@@ -1,8 +1,16 @@
 # dronePoste
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Python-3.8+-blue?style=flat-square&logo=python" />
-  <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react" />
+  <img src="https://img.shields.io/badge/Python-3.8%2B-3776AB?style=flat-square&logo=python" />
+  <img src="https://img.shields.io/badge/FastAPI-0.110%2B-009688?style=flat-square&logo=fastapi" />
+  <img src="https://img.shields.io/badge/MAVSDK-Python-0A4D91?style=flat-square" />
+  <img src="https://img.shields.io/badge/Raspberry%20Pi-Zero%202%20W-A22846?style=flat-square&logo=raspberrypi" />
+  <img src="https://img.shields.io/badge/picamera2-Camera%20Module%203-00A3FF?style=flat-square" />
+  <img src="https://img.shields.io/badge/Leaflet-Map%20UI-199900?style=flat-square&logo=leaflet" />
+  <img src="https://img.shields.io/badge/OpenStreetMap-Data-7DBE3C?style=flat-square&logo=openstreetmap" />
+  <img src="https://img.shields.io/badge/Protomaps-Offline%20Tiles-343A40?style=flat-square" />
+  <img src="https://img.shields.io/badge/NetworkManager-Hotspot-2DDE98?style=flat-square&logo=linux" />
+  <img src="https://img.shields.io/badge/ArduPilot-Copter-FF6B35?style=flat-square" />
 </p>
 
 <img src="assests/drone.jpg" alt="DronePi drone" width="500">
